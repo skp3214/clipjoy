@@ -21,9 +21,6 @@ async function dbConnect() {
         const opts = {
             bufferCommands: false,
             maxPoolSize: 5,
-            bufferMaxEntries: 0,
-            useNewUrlParser: true,
-            useUnifiedTopology: true
         };
 
         cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongoose) => {
@@ -40,3 +37,5 @@ async function dbConnect() {
 
     return cached.conn;
 }
+
+export default dbConnect;
