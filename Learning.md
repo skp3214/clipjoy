@@ -26,3 +26,15 @@ Since React is client-side, you **cannot** connect directly to MongoDB. Instead,
 | Can run in a serverless environment? | ✅ Yes | ❌ No |
 
 **Next.js uses a server-side connection, whereas React (frontend) requires an API to interact with MongoDB.** 🚀
+
+---
+
+### [Small Learnings]()
+- **Next.js** runs on the server, so it can connect to MongoDB directly.
+- **React (frontend)** runs in the browser, so it needs an API to interact with database.
+- **Serverless Next.js** may create new instances on each request, so caching DB connections is crucial.
+- In Next.js when you create api's, you need to use POST in place of post. Capitalization matters.
+
+---
+# [Next-Auth]()
+![alt text](image.png)
