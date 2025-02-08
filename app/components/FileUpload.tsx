@@ -6,11 +6,11 @@ import { Loader2 } from "lucide-react";
 
 type FileUploadProps = {
     onSuccess: (res: IKUploadResponse) => void;
-    OnProgress?: (progress: number) => void;
+    onProgress?: (progress: number) => void;
     fileTypes?: "image" | "video";
 }
 
-export default function FileUpload({ onSuccess, OnProgress, fileTypes = "image" }: FileUploadProps) {
+export default function FileUpload({ onSuccess, onProgress, fileTypes = "image" }: FileUploadProps) {
 
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,9 +29,9 @@ export default function FileUpload({ onSuccess, OnProgress, fileTypes = "image" 
     };
 
     const handleProgress = (event: ProgressEvent) => {
-        if (event.lengthComputable && OnProgress) {
+        if (event.lengthComputable && onProgress) {
             const progress = Math.round((event.loaded / event.total) * 100);
-            OnProgress(progress);
+            onProgress(progress);
         }
     };
 
@@ -90,7 +90,7 @@ export default function FileUpload({ onSuccess, OnProgress, fileTypes = "image" 
             }
             {
                 error && (
-                    <div className="text-error text-sm text-red-500">{error}</div>
+                    <div className="text-error text-sm">{error}</div>
                 )
             }
         </div>
