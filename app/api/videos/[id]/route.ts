@@ -2,8 +2,9 @@ import dbConnect from "@/lib/db";
 import Video from "@/models/Video";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: { id: string } }) {    
     try {
+        const { params } = context;
         const { id } = params;
         console.log("id", id);
         if (!id) {
