@@ -2,10 +2,10 @@ import dbConnect from "@/lib/db";
 import Video from "@/models/Video";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest, context: { params: { id: string } }) {    
+export async function GET(request: NextRequest) {
     try {
-        const { params } = context;
-        const { id } = params;
+        const url = new URL(request.url);
+        const id = url.pathname.split('/').pop();
         console.log("id", id);
         if (!id) {
             return NextResponse.json({ error: "Video ID is required" }, { status: 400 });
