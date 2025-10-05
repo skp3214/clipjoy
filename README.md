@@ -34,7 +34,7 @@ A modern short-form video platform built with the T3 stack (Next.js, TypeScript,
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/skp3214/clipjoy.git
 cd clipjoy
 ```
 
