@@ -6,7 +6,8 @@ import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload
 import { Loader2 } from "lucide-react";
 import { useNotification } from "./Notification";
 import FileUpload from "./FileUpload";
-import { apiClient } from "@/lib/api-client";
+import { trpc } from "@/lib/trpc-client";
+import { useRouter } from "next/navigation";
 
 interface VideoFormData {
   title: string;
@@ -16,9 +17,30 @@ interface VideoFormData {
 }
 
 export default function VideoUploadForm() {
-  const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { showNotification } = useNotification();
+  const router = useRouter();
+  const utils = trpc.useUtils();
+
+  const createVideoMutation = trpc.video.create.useMutation({
+    onSuccess: () => {
+      showNotification("Video published successfully!", "success");
+      utils.video.getAll.invalidate();
+      
+      // Reset form
+      setValue("title", "");
+      setValue("description", "");
+      setValue("videoUrl", "");
+      setValue("thumbnailUrl", "");
+      setUploadProgress(0);
+      
+      // Redirect to home page
+      router.push("/");
+    },
+    onError: (error) => {
+      showNotification(error.message || "Failed to publish video", "error");
+    },
+  });
 
   const {
     register,
@@ -35,8 +57,13 @@ export default function VideoUploadForm() {
   });
 
   const handleUploadSuccess = (response: IKUploadResponse) => {
-    setValue("videoUrl", response.filePath);
-    setValue("thumbnailUrl", response.thumbnailUrl || response.filePath);
+    // Construct full ImageKit URLs
+    const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT;
+    const videoUrl = response.url || `${urlEndpoint}/${response.filePath}`;
+    const thumbnailUrl = response.thumbnailUrl || videoUrl;
+    
+    setValue("videoUrl", videoUrl);
+    setValue("thumbnailUrl", thumbnailUrl);
     showNotification("Video uploaded successfully!", "success");
   };
 
@@ -50,24 +77,16 @@ export default function VideoUploadForm() {
       return;
     }
 
-    setLoading(true);
-    try {
-      await apiClient.createVideo(data);
-      showNotification("Video published successfully!", "success");
-
-      setValue("title", "");
-      setValue("description", "");
-      setValue("videoUrl", "");
-      setValue("thumbnailUrl", "");
-      setUploadProgress(0);
-    } catch (error) {
-      showNotification(
-        error instanceof Error ? error.message : "Failed to publish video",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
+    createVideoMutation.mutate({
+      title: data.title,
+      description: data.description,
+      videoUrl: data.videoUrl,
+      thumbnailUrl: data.thumbnailUrl,
+      controls: true,
+      height: 1920,
+      width: 1080,
+      quality: 100,
+    });
   };
 
   return (
@@ -123,9 +142,9 @@ export default function VideoUploadForm() {
       <button
         type="submit"
         className="btn btn-primary btn-block"
-        disabled={loading || !uploadProgress}
+        disabled={createVideoMutation.isPending || !uploadProgress}
       >
-        {loading ? (
+        {createVideoMutation.isPending ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Publishing Video...

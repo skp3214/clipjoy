@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useNotification } from "../components/Notification";
+import { trpc } from "@/lib/trpc-client";
 import Link from "next/link";
 
 export default function Register() {
@@ -12,6 +13,16 @@ export default function Register() {
   const router = useRouter();
   const { showNotification } = useNotification();
 
+  const registerMutation = trpc.auth.register.useMutation({
+    onSuccess: () => {
+      showNotification("Registration successful! Please log in.", "success");
+      router.push("/login");
+    },
+    onError: (error) => {
+      showNotification(error.message || "Registration failed", "error");
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -20,27 +31,7 @@ export default function Register() {
       return;
     }
 
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
-
-      showNotification("Registration successful! Please log in.", "success");
-      router.push("/login");
-    } catch (error) {
-      showNotification(
-        error instanceof Error ? error.message : "Registration failed",
-        "error"
-      );
-    }
+    registerMutation.mutate({ email, password });
   };
 
   return (
@@ -58,11 +49,12 @@ export default function Register() {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full px-3 py-2 border rounded"
+            disabled={registerMutation.isPending}
           />
         </div>
         <div>
           <label htmlFor="password" className="block mb-1">
-            Password
+            Password (min 6 characters)
           </label>
           <input
             type="password"
@@ -70,7 +62,9 @@ export default function Register() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={6}
             className="w-full px-3 py-2 border rounded"
+            disabled={registerMutation.isPending}
           />
         </div>
         <div>
@@ -84,13 +78,15 @@ export default function Register() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             className="w-full px-3 py-2 border rounded"
+            disabled={registerMutation.isPending}
           />
         </div>
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+          disabled={registerMutation.isPending}
+          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Register
+          {registerMutation.isPending ? "Registering..." : "Register"}
         </button>
         <p className="text-center mt-4">
           Already have an account?{" "}
