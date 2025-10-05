@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "ClipJoy",
-  description: "Demo of ImageKit integration with Next.js",
+  description: "ClipJoy - A video sharing platform",
   icons: {
     icon: "/clipjoy.png",
     shortcut: "/clipjoy.png",

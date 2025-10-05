@@ -1,43 +1,49 @@
 "use client";
 import { useState } from "react";
-import { IKUpload } from "imagekitio-next";
-import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload/props";
 import { Loader2 } from "lucide-react";
 
 type FileUploadProps = {
-    onSuccess: (res: IKUploadResponse) => void;
+    onSuccess: (res: { fileName: string; fileData: ArrayBuffer; mimeType: string; fileSize: number }) => void;
     onProgress?: (progress: number) => void;
     fileTypes?: "image" | "video";
 }
 
 export default function FileUpload({ onSuccess, onProgress, fileTypes = "image" }: FileUploadProps) {
-
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const onError = (err: { message: string }) => {
-        console.log("Error", err);
-        setError(err.message);
-        setUploading(false);
-    };
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-    const handleSuccess = (res: IKUploadResponse) => {
-        console.log("Success", res);
-        setUploading(false);
-        setError(null);
-        onSuccess(res);
-    };
+        if (!validateFile(file)) return;
 
-    const handleProgress = (event: ProgressEvent) => {
-        if (event.lengthComputable && onProgress) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            onProgress(progress);
-        }
-    };
-
-    const handleStartUpload = () => {
         setUploading(true);
         setError(null);
+
+        try {
+            const fileData = await file.arrayBuffer();
+            
+            if (onProgress) {
+                for (let i = 0; i <= 100; i += 10) {
+                    onProgress(i);
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+
+            onSuccess({
+                fileName: file.name,
+                fileData,
+                mimeType: file.type,
+                fileSize: file.size
+            });
+
+        } catch (error) {
+            setError("Failed to read file");
+            console.error("File read error:", error);
+        } finally {
+            setUploading(false);
+        }
     };
 
     const validateFile = (file: File) => {
@@ -64,35 +70,25 @@ export default function FileUpload({ onSuccess, onProgress, fileTypes = "image" 
         }
         return true;
     }
+
     return (
         <div className="space-y-2">
-
-            <IKUpload
-                fileName={fileTypes === "video" ? "video.mp4" : "image.jpg"}
-                useUniqueFileName={true}
-                validateFile={validateFile}
-
-                onError={onError}
-                onSuccess={handleSuccess}
-                onUploadProgress={handleProgress}
-                onUploadStart={handleStartUpload}
+            <input
+                type="file"
+                onChange={handleFileChange}
                 accept={fileTypes === "video" ? "video/*" : "image/*"}
                 className="file-input file-input-bordered w-full"
-                folder={fileTypes === "video" ? "/videos" : "/images"}
+                disabled={uploading}
             />
-            {
-                uploading && (
-                    <div className="flex items-center gap-2 text-sm text-primary">
-                        <Loader2 className="animate-spin w-4 h-4"/>
-                        <span>Uploading...</span>
-                    </div>
-                )
-            }
-            {
-                error && (
-                    <div className="text-error text-sm">{error}</div>
-                )
-            }
+            {uploading && (
+                <div className="flex items-center gap-2 text-sm text-primary">
+                    <Loader2 className="animate-spin w-4 h-4"/>
+                    <span>Processing file...</span>
+                </div>
+            )}
+            {error && (
+                <div className="text-error text-sm">{error}</div>
+            )}
         </div>
     );
 }

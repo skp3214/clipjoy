@@ -62,8 +62,12 @@ model Video {
   id           String   @id @default(cuid())
   title        String
   description  String
-  videoUrl     String
-  thumbnailUrl String
+  videoData    Bytes?   // Store video as binary data
+  videoUrl     String?  // Keep URL as fallback for existing videos
+  thumbnailUrl String?
+  mimeType     String?  // video/mp4, video/webm, etc.
+  fileName     String?  // original filename
+  fileSize     Int?     // file size in bytes
   userId       String?
   controls     Boolean  @default(true)
   height       Int      @default(1920)

@@ -15,7 +15,8 @@ export default withAuth(
                     pathname === "/login" ||
                     pathname === "/register" ||
                     pathname === "/" ||
-                    pathname.startsWith("/api/imagekit-auth")  // Allow ImageKit auth
+                    pathname.startsWith("/api/trpc") ||      // Allow tRPC API routes
+                    pathname.startsWith("/api/video")        // Allow video streaming
                 ) {
                     return true;
                 }

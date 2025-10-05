@@ -5,8 +5,12 @@ import { TRPCError } from '@trpc/server';
 const videoCreateInput = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
-  videoUrl: z.url('Valid video URL is required'),
-  thumbnailUrl: z.url('Valid thumbnail URL is required'),
+  videoData: z.any().optional(), 
+  videoUrl: z.string().optional(),
+  thumbnailUrl: z.string().optional(),
+  fileName: z.string().optional(),
+  mimeType: z.string().optional(),
+  fileSize: z.number().optional(),
   controls: z.boolean().optional().default(true),
   height: z.number().optional().default(1920),
   width: z.number().optional().default(1080),
@@ -91,13 +95,24 @@ export const videoRouter = createTRPCRouter({
       };
     }),
 
-  create: protectedProcedure
+  create: publicProcedure
     .input(videoCreateInput)
     .mutation(async ({ ctx, input }) => {
       const video = await ctx.prisma.video.create({
         data: {
-          ...input,
-          userId: ctx.session.user.id,
+          title: input.title,
+          description: input.description,
+          videoData: input.videoData ? Buffer.from(input.videoData) : null,
+          videoUrl: input.videoUrl || null,
+          thumbnailUrl: input.thumbnailUrl || null,
+          fileName: input.fileName || null,
+          mimeType: input.mimeType || null,
+          fileSize: input.fileSize || null,
+          controls: input.controls ?? true,
+          height: input.height ?? 1920,
+          width: input.width ?? 1080,
+          quality: input.quality ?? 100,
+          userId: ctx.session?.user?.id || null,
         },
         include: {
           user: {
@@ -109,11 +124,11 @@ export const videoRouter = createTRPCRouter({
           },
           likes: true,
         },
-      });
+      } as any);
 
       return {
         ...video,
-        likesCount: video.likes.length,
+        likesCount: (video as any).likes?.length || 0,
         isLiked: false,
       };
     }),

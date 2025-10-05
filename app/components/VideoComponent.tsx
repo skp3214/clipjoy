@@ -1,6 +1,5 @@
 "use client";
 
-import { IKVideo } from "imagekitio-next";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc-client";
 import { Heart } from "lucide-react";
@@ -10,8 +9,12 @@ type Video = {
   id: string;
   title: string;
   description: string;
-  videoUrl: string;
-  thumbnailUrl: string;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  videoData?: Buffer | null;
+  fileName?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
   controls: boolean;
   height: number;
   width: number;
@@ -31,17 +34,9 @@ type Video = {
 export default function VideoComponent({ video }: { video: Video }) {
   const { data: session } = useSession();
   const utils = trpc.useUtils();
-  
-  const getVideoPath = (url: string) => {
-    try {
-      const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT;
-      if (url.startsWith(urlEndpoint + '/')) {
-        return url.replace(urlEndpoint + '/', '');
-      }
-      return url.startsWith('/') ? url.substring(1) : url;
-    } catch {
-      return url;
-    }
+
+  const getVideoUrl = () => {
+    return `/api/video/${video.id}`;
   };
   
   const toggleLikeMutation = trpc.video.toggleLike.useMutation({
@@ -66,16 +61,17 @@ export default function VideoComponent({ video }: { video: Video }) {
             className="rounded-xl overflow-hidden relative w-full"
             style={{ aspectRatio: "9/16" }}
           >
-            <IKVideo
-              path={getVideoPath(video.videoUrl)}
-              transformation={[
-                {
-                  height: video.height.toString(),
-                  width: video.width.toString(),
-                },
-              ]}
+            <video
+              src={getVideoUrl()}
               controls={video.controls}
               className="w-full h-full object-cover"
+              preload="metadata"
+              onError={(e) => {
+                console.error('Video failed to load from database');
+                if (video.videoUrl && e.currentTarget.src !== video.videoUrl) {
+                  e.currentTarget.src = video.videoUrl;
+                }
+              }}
             />
           </div>
         </Link>

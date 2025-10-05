@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload/props";
 import { Loader2 } from "lucide-react";
 import { useNotification } from "./Notification";
 import FileUpload from "./FileUpload";
@@ -12,12 +11,20 @@ import { useRouter } from "next/navigation";
 interface VideoFormData {
   title: string;
   description: string;
-  videoUrl: string;
-  thumbnailUrl: string;
+  videoData?: ArrayBuffer;
+  fileName?: string;
+  mimeType?: string;
+  fileSize?: number;
 }
 
 export default function VideoUploadForm() {
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [videoFile, setVideoFile] = useState<{
+    fileName: string;
+    fileData: ArrayBuffer;
+    mimeType: string;
+    fileSize: number;
+  } | null>(null);
   const { showNotification } = useNotification();
   const router = useRouter();
   const utils = trpc.useUtils();
@@ -27,14 +34,11 @@ export default function VideoUploadForm() {
       showNotification("Video published successfully!", "success");
       utils.video.getAll.invalidate();
       
-      // Reset form
       setValue("title", "");
       setValue("description", "");
-      setValue("videoUrl", "");
-      setValue("thumbnailUrl", "");
+      setVideoFile(null);
       setUploadProgress(0);
       
-      // Redirect to home page
       router.push("/");
     },
     onError: (error) => {
@@ -51,19 +55,16 @@ export default function VideoUploadForm() {
     defaultValues: {
       title: "",
       description: "",
-      videoUrl: "",
-      thumbnailUrl: "",
     },
   });
 
-  const handleUploadSuccess = (response: IKUploadResponse) => {
-    // Construct full ImageKit URLs
-    const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT;
-    const videoUrl = response.url || `${urlEndpoint}/${response.filePath}`;
-    const thumbnailUrl = response.thumbnailUrl || videoUrl;
-    
-    setValue("videoUrl", videoUrl);
-    setValue("thumbnailUrl", thumbnailUrl);
+  const handleUploadSuccess = (response: {
+    fileName: string;
+    fileData: ArrayBuffer;
+    mimeType: string;
+    fileSize: number;
+  }) => {
+    setVideoFile(response);
     showNotification("Video uploaded successfully!", "success");
   };
 
@@ -72,16 +73,20 @@ export default function VideoUploadForm() {
   };
 
   const onSubmit = async (data: VideoFormData) => {
-    if (!data.videoUrl) {
+    if (!videoFile) {
       showNotification("Please upload a video first", "error");
       return;
     }
 
+    const videoBuffer = Buffer.from(videoFile.fileData);
+
     createVideoMutation.mutate({
       title: data.title,
       description: data.description,
-      videoUrl: data.videoUrl,
-      thumbnailUrl: data.thumbnailUrl,
+      videoData: videoBuffer,
+      fileName: videoFile.fileName,
+      mimeType: videoFile.mimeType,
+      fileSize: videoFile.fileSize,
       controls: true,
       height: 1920,
       width: 1080,
@@ -142,7 +147,7 @@ export default function VideoUploadForm() {
       <button
         type="submit"
         className="btn btn-primary btn-block"
-        disabled={createVideoMutation.isPending || !uploadProgress}
+        disabled={createVideoMutation.isPending || !videoFile}
       >
         {createVideoMutation.isPending ? (
           <>
