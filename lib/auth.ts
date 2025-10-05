@@ -1,8 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import dbConnect from "./db";
-import User from "@/models/User";
+import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+
 const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
@@ -17,10 +17,11 @@ const authOptions: NextAuthOptions = {
                 }
 
                 try {
-                    await dbConnect();
-                    const user = await User.findOne({ email: credentials.email });
+                    const user = await prisma.user.findUnique({ 
+                        where: { email: credentials.email } 
+                    });
 
-                    if (!user) {
+                    if (!user || !user.password) {
                         throw new Error("No user found");
                     }
 
@@ -31,8 +32,9 @@ const authOptions: NextAuthOptions = {
                     }
 
                     return {
-                        id: user._id.toString(),
+                        id: user.id,
                         email: user.email,
+                        name: user.name,
                     };
 
                 } catch (error) {
@@ -41,29 +43,27 @@ const authOptions: NextAuthOptions = {
             }
         }),
     ],
-    callbacks:{
-        async jwt({token,user}){
-            if(user){
-                token.id=user.id;
+    session: {
+        strategy: "jwt",
+    },
+    callbacks: {
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id;
             }
             return token;
         },
-        async session({session,token}){
-            if(session.user){
-                session.user.id=token.id as string;
+        async session({ session, token }) {
+            if (token && session.user) {
+                session.user.id = token.id as string;
             }
             return session;
-        }
+        },
     },
-    pages:{
-        signIn:"/login",
-        error:"/login"
+    pages: {
+        signIn: "/login",
     },
-    session:{
-        strategy:"jwt",
-        maxAge:30*24*60*60
-    },
-    secret:process.env.NEXTAUTH_SECRET
-}
+    secret: process.env.NEXTAUTH_SECRET,
+};
 
 export default authOptions;

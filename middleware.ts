@@ -11,13 +11,12 @@ export default withAuth(
                 const { pathname } = req.nextUrl;
 
                 if (pathname.startsWith("/api/auth") ||
+                    pathname.startsWith("/api/trpc") ||  // Allow tRPC routes
                     pathname === "/login" ||
-                    pathname === "/register"
+                    pathname === "/register" ||
+                    pathname === "/" ||
+                    pathname.startsWith("/api/imagekit-auth")  // Allow ImageKit auth
                 ) {
-                    return true;
-                }
-
-                if(pathname==="/" || pathname.startsWith("/api/videos")){
                     return true;
                 }
 
