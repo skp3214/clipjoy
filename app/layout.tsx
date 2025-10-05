@@ -8,6 +8,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "ClipJoy",
   description: "Demo of ImageKit integration with Next.js",
+  icons: {
+    icon: "/clipjoy.png",
+    shortcut: "/clipjoy.png",
+    apple: "/clipjoy.png",
+  },
 };
 
 export default function RootLayout({

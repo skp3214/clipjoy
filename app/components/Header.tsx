@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Home, User } from "lucide-react";
 import { useNotification } from "./Notification";
@@ -30,7 +31,14 @@ export default function Header() {
               showNotification("Welcome to ClipJoy", "info")
             }
           >
-            <Home className="w-5 h-5" />
+            <Image 
+              className="w-8 h-8 rounded" 
+              src="/clipjoy.png" 
+              alt="ClipJoy Logo" 
+              width={32} 
+              height={32}
+              priority
+            />
             ClipJoy
           </Link>
         </div>
@@ -62,7 +70,7 @@ export default function Header() {
                         href="/upload"
                         className="px-4 py-2 hover:bg-base-200 block w-full"
                         onClick={() =>
-                          showNotification("Welcome to Admin Dashboard", "info")
+                          showNotification("Welcome to Video Upload", "info")
                         }
                       >
                         Video Upload
