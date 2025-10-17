@@ -33,8 +33,10 @@ const VideoPage = ({ params }: { params: Promise<{ id: string }> }) => {
     if (!video) return <div>No video found</div>;
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <VideoComponent video={video} />
+        <div className="container mx-auto px-4 py-6">
+            <div className="max-w-4xl mx-auto">
+                <VideoComponent video={video} />
+            </div>
         </div>
     );
 };
